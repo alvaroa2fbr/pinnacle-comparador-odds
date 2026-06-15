@@ -24,9 +24,11 @@
   .search-input::placeholder { color:#555; }
   .search-input:focus { outline:none; border-color:#f5a623; box-shadow:0 0 0 3px rgba(245,166,35,.12); }
   .filter-row { display:flex; gap:8px; margin-top:10px; }
+  .update-info { font-size:11px; color:#666; margin-top:10px; text-align:center; }
   .filter-chip { font-size:12px; font-weight:700; color:#999; background:#0f0f0f; border:1px solid #2e2e2e; border-radius:20px; padding:7px 14px; cursor:pointer; transition:all .15s; }
   .filter-chip:active { transform:scale(.97); }
   .filter-chip.active { color:#fff; border-color:rgba(74,222,128,.6); background:rgba(74,222,128,.12); }
+  .update-info { font-size:11px; color:#666; margin-top:10px; text-align:center; }
   .no-results { text-align:center; padding:40px 16px; color:#555; font-size:14px; }
   .game-cards { padding:12px 16px 28px; display:flex; flex-direction:column; gap:12px; }
   .game-card { background:#212121; border:1px solid rgba(255,255,255,.55); border-radius:14px; padding:0; cursor:pointer; transition:border-color .15s, background .15s, transform .1s; overflow:hidden; box-shadow:0 0 6px rgba(255,255,255,.25), inset 0 0 6px rgba(255,255,255,.06); }
@@ -233,6 +235,7 @@
         <button class="filter-chip active" data-filter="all" onclick="setFilter('all',this)">Todos</button>
         <button class="filter-chip" data-filter="wc" onclick="setFilter('wc',this)">🏆 Copa do Mundo</button>
       </div>
+      <div class="update-info">🕓 Última atualização: 15/06/2026 às 15:14</div>
     </div>
     <div class="game-cards" id="gameCards"></div>
   </div>

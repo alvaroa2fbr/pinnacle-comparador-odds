@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>pinnacle_vs_mercado_dashboard.html</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; color:#f0f0f0; font-family:'Inter',system-ui,sans-serif; }
+  #app { max-width:480px; margin:0 auto; min-height:100vh; }
+
+  /* ===== LIST VIEW ===== */
+  .list-header { padding:14px 16px; background-color:#1a1a1a; background-image:linear-gradient(135deg,rgba(254,85,0,.20),rgba(26,26,26,1) 60%); border-bottom:1px solid #262626; position:sticky; top:0; z-index:10; }
+  .header-top { display:flex; align-items:center; gap:12px; padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid #262626; }
+  .header-badge { width:36px; height:36px; border-radius:50%; flex-shrink:0; overflow:hidden; border:2px solid #FE5500; }
+  .header-badge svg { width:100%; height:100%; display:block; }
+  .header-titles { min-width:0; flex:1; }
+  .list-header h1 { font-size:16px; font-weight:800; letter-spacing:-.01em; line-height:1.2; }
+  .list-header .sub { font-size:12px; color:#888; margin-top:2px; }
+  .header-pill { font-size:11px; font-weight:700; color:#4ade80; background:rgba(74,222,128,.12); border:1px solid rgba(74,222,128,.3); border-radius:20px; padding:5px 12px; flex-shrink:0; white-space:nowrap; }
+  .search-wrap { position:relative; }
+  .search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:15px; color:#666; pointer-events:none; }
+  .search-input { width:100%; background:#0f0f0f; border:1px solid #2e2e2e; color:#f0f0f0; border-radius:12px; padding:13px 14px 13px 40px; font-size:14px; font-family:inherit; transition:border-color .15s, box-shadow .15s; }
+  .search-input::placeholder { color:#555; }
+  .search-input:focus { outline:none; border-color:#f5a623; box-shadow:0 0 0 3px rgba(245,166,35,.12); }
+  .filter-row { display:flex; gap:8px; margin-top:10px; }
+  .filter-chip { font-size:12px; font-weight:700; color:#999; background:#0f0f0f; border:1px solid #2e2e2e; border-radius:20px; padding:7px 14px; cursor:pointer; transition:all .15s; }
+  .filter-chip:active { transform:scale(.97); }
+  .filter-chip.active { color:#fff; border-color:rgba(74,222,128,.6); background:rgba(74,222,128,.12); }
+  .no-results { text-align:center; padding:40px 16px; color:#555; font-size:14px; }
+  .game-cards { padding:12px 16px 28px; display:flex; flex-direction:column; gap:12px; }
+  .game-card { background:#212121; border:1px solid rgba(255,255,255,.55); border-radius:14px; padding:0; cursor:pointer; transition:border-color .15s, background .15s, transform .1s; overflow:hidden; box-shadow:0 0 6px rgba(255,255,255,.25), inset 0 0 6px rgba(255,255,255,.06); }
+  .game-card:active { background:#272727; transform:scale(.99); }
+  .game-card.worldcup { background:#1c211c; border:1px solid rgba(74,222,128,.6); box-shadow:0 0 8px rgba(74,222,128,.25), inset 0 0 8px rgba(74,222,128,.06); }
+  .game-card.worldcup:active { background:#212721; }
+
+  .gc-head { display:flex; justify-content:space-between; align-items:center; padding:11px 16px; border-bottom:1px solid #262626; }
+  .game-card.worldcup .gc-head { border-bottom:1px solid rgba(74,222,128,.18); }
+  .gc-league { font-size:11px; color:#999; letter-spacing:.08em; font-weight:700; }
+  .gc-time { font-size:12px; color:#666; font-weight:600; }
+
+  .gc-matchup { display:flex; align-items:center; justify-content:center; gap:18px; padding:20px 16px; }
+  .gc-team { display:flex; flex-direction:column; align-items:center; gap:8px; flex:1; min-width:0; }
+  .gc-flag { font-size:36px; line-height:1; filter:drop-shadow(0 2px 4px rgba(0,0,0,.45)); }
+  .gc-flag svg { width:44px; height:30px; }
+  .gc-team-name { font-size:14px; font-weight:700; text-align:center; line-height:1.25; word-break:break-word; }
+  .gc-vs { font-size:12px; color:#555; font-weight:800; letter-spacing:.05em; flex-shrink:0; }
+
+  .gc-badges-legend { font-size:10px; color:#666; padding:0 16px 8px; text-align:center; }
+  .gc-badges { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:0 16px 16px; }
+  .gc-badge { background:#222; border:1px solid #333; border-radius:9px; padding:9px 4px; text-align:center; }
+  .gc-badge .lbl { font-size:11px; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; margin-bottom:3px; }
+  .gc-badge .val { color:#f5a623; font-weight:800; font-size:17px; display:block; }
+  .gc-badge .avg { font-size:10px; color:#666; display:block; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .gc-badge.up .val { color:#4ade80; }
+
+  .gc-bottom { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:12px 16px; background:#161616; border-top:1px solid #262626; }
+  .game-card.worldcup .gc-bottom { background:#1a1f1a; border-top:1px solid rgba(74,222,128,.18); }
+  .gc-edge { font-size:12px; color:#888; line-height:1.6; }
+  .gc-edge b { color:#4ade80; }
+  .gc-arrow { color:#f5a623; font-size:19px; flex-shrink:0; }
+
+  /* ===== DETAIL VIEW ===== */
+  .sticky-top { position:sticky; top:0; z-index:10; }
+  .back-bar { display:flex; align-items:center; gap:8px; padding:12px 16px; background:#1a1a1a; cursor:pointer; border-bottom:1px solid #2a2a2a; }
+  .back-bar .arrow { color:#f5a623; font-size:17px; }
+  .back-bar .label { font-size:13px; color:#aaa; font-weight:600; }
+
+  /* MATCHUP BANNER */
+  .matchup-banner { overflow:hidden; }
+  .mb-bg { display:flex; align-items:center; justify-content:space-between; padding:14px 4px 6px; position:relative; }
+  .mb-side { display:flex; flex-direction:column; align-items:center; gap:2px; z-index:1; width:42%; overflow:hidden; }
+  .mb-name { font-size:12px; font-weight:800; color:#fff; text-transform:uppercase; text-shadow:0 1px 4px rgba(0,0,0,.55); letter-spacing:.04em; text-align:center; line-height:1.2; }
+  .mb-vs { font-size:21px; font-weight:900; color:#fff; background:rgba(0,0,0,.4); border-radius:50%; width:42px; height:42px; display:flex; align-items:center; justify-content:center; z-index:2; flex-shrink:0; border:2px solid rgba(255,255,255,.45); }
+
+  .header { background:#1a1a1a; padding:14px 16px 16px; }
+  .header-meta { font-size:11px; color:#888; letter-spacing:.15em; font-weight:600; margin-bottom:10px; }
+  .hero { display:flex; align-items:center; gap:14px; margin:12px 0 8px; }
+  .hero-pct { font-size:57px; font-weight:800; color:#f5a623; line-height:1; }
+  .hero-text { font-size:16px; font-weight:600; color:#f0f0f0; line-height:1.5; }
+  .progress-wrap { margin-bottom:4px; }
+  .progress-bg { height:3px; background:#333; border-radius:2px; }
+  .progress-fill { height:3px; background:#f5a623; border-radius:2px; transition:width .4s; }
+  .progress-label { text-align:right; font-size:12px; color:#666; margin-top:3px; }
+
+  .stat-boxes { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:#333; border:1px solid #333; border-radius:8px; overflow:hidden; margin-top:14px; }
+  .stat-box { background:#1a1a1a; padding:12px 14px; }
+  .stat-box + .stat-box { border-left:1px solid #333; }
+  .stat-label { font-size:11px; color:#666; letter-spacing:.1em; margin-bottom:4px; line-height:1.3; }
+  .stat-val { font-size:23px; font-weight:700; }
+  .stat-sub { font-size:12px; color:#666; margin-top:2px; }
+
+  .section-title { font-size:11px; color:#666; letter-spacing:.12em; margin-bottom:8px; }
+
+  /* MARKET CARDS */
+  .market-cards { display:flex; gap:6px; margin-top:14px; }
+  .mcard { flex:1; background:#222; border:1px solid #333; border-radius:8px; padding:8px 6px; text-align:center; cursor:pointer; transition:all .15s; }
+  .mcard.active { background:#2a2000; border-color:#f5a623; }
+  .mcard-label { font-size:11px; color:#888; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mcard-val { font-size:16px; font-weight:700; color:#f0f0f0; }
+  .mcard.active .mcard-val { color:#f5a623; }
+  .mcard-status { font-size:11px; margin-top:2px; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* BAR CHART */
+  .bar-section { margin-top:14px; }
+  .bar-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .bar-name { width:80px; text-align:right; font-size:13px; color:#aaa; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar-name.pin { color:#f5a623; font-weight:700; }
+  .bar-track { flex:1; height:16px; background:#222; border-radius:3px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:3px; transition:width .3s; }
+  .bar-odd { width:38px; text-align:right; font-size:13px; font-weight:700; flex-shrink:0; }
+  .bar-diff { width:36px; text-align:right; font-size:12px; flex-shrink:0; }
+
+  /* TABS */
+  .tabs-wrap { padding:12px 16px 0; background:#111; }
+  .tabs { display:flex; gap:4px; margin-bottom:12px; }
+  .tab-btn { flex:1; padding:10px 4px; border:1px solid #333; background:#1a1a1a; color:#666; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; letter-spacing:.04em; transition:all .15s; }
+  .tab-btn.active { border-color:#f5a623; background:#2a2000; color:#f5a623; }
+  .warning { font-size:12px; color:#888; margin-bottom:10px; display:flex; gap:6px; align-items:flex-start; }
+  .sort-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .sort-label { font-size:11px; color:#666; letter-spacing:.12em; }
+  select { background:#1a1a1a; border:1px solid #333; color:#aaa; border-radius:6px; padding:4px 8px; font-size:12px; }
+
+  /* TABLE SHARED */
+  .tbl-header { display:grid; padding:6px 16px; border-bottom:1px solid #2a2a2a; margin-bottom:4px; }
+  .tbl-header span { font-size:11px; color:#555; font-weight:600; letter-spacing:.06em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tbl-row { display:grid; padding:10px 16px; border-bottom:1px solid #1a1a1a; align-items:center; }
+  .tbl-row.pin-row { background:#1e1800; }
+  .tbl-row:not(.pin-row):nth-child(even) { background:#0d0d0d; }
+  .bk-name { font-size:14px; color:#ccc; display:flex; align-items:center; gap:4px; }
+  .bk-name.pin { color:#f5a623; font-weight:700; }
+  .cell { text-align:center; }
+  .cell-odd { font-size:15px; font-weight:700; }
+  .cell-pct { font-size:11px; margin-top:1px; }
+
+  /* TABLE 1X2 */
+  .tbl-1x2 .tbl-header { grid-template-columns:1.4fr 1fr 1fr 1fr; }
+  .tbl-1x2 .tbl-row   { grid-template-columns:1.4fr 1fr 1fr 1fr; }
+  .tbl-ou .tbl-header  { grid-template-columns:1.4fr 1fr 1fr; }
+  .tbl-ou .tbl-row     { grid-template-columns:1.4fr 1fr 1fr; }
+
+  /* TABLE GERAL */
+  .tbl-geral-wrap { overflow-x:auto; padding-bottom:24px; }
+  .tbl-geral-header { display:grid; grid-template-columns:110px repeat(5,72px); padding:6px 12px; border-bottom:1px solid #2a2a2a; position:sticky; top:0; background:#111; z-index:2; }
+  .tbl-geral-header span { font-size:10px; color:#555; font-weight:700; letter-spacing:.05em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tbl-geral-header span:not(:first-child) { text-align:center; }
+  .tbl-geral-row { display:grid; grid-template-columns:110px repeat(5,72px); padding:8px 12px; border-bottom:1px solid #1a1a1a; align-items:center; }
+  .tbl-geral-row.pin-row { background:#1e1800; }
+  .tbl-geral-row:not(.pin-row):nth-child(even) { background:#0d0d0d; }
+  .geral-name { font-size:12px; color:#bbb; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .geral-name.pin { color:#f5a623; font-weight:700; }
+  .gcell { text-align:center; }
+  .gcell-odd { font-size:14px; font-weight:700; }
+  .gcell-pct { font-size:10px; margin-top:1px; }
+
+  /* ARB */
+  .arb-info { background:#0f2318; border:1px solid #166534; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:13px; color:#86efac; }
+  .arb-card { background:#1a1a1a; border:1px solid #2a2a2a; border-left:3px solid #4ade80; border-radius:8px; padding:12px; margin-bottom:8px; }
+  .arb-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .arb-badge { background:#166534; color:#4ade80; border-radius:4px; padding:2px 7px; font-size:11px; font-weight:700; }
+  .arb-profit { color:#4ade80; font-weight:700; font-size:15px; }
+  .arb-legs { display:grid; gap:6px; margin-bottom:8px; }
+  .arb-leg { background:#111; border-radius:6px; padding:8px 10px; }
+  .arb-leg-bk { font-size:11px; color:#555; margin-bottom:2px; }
+  .arb-leg-label { font-size:12px; font-weight:600; color:#ccc; margin-bottom:4px; }
+  .arb-leg-bottom { display:flex; justify-content:space-between; align-items:center; }
+  .arb-leg-odd { color:#f5a623; font-weight:700; font-size:15px; }
+  .arb-leg-stake { color:#818cf8; font-size:12px; }
+  .arb-example { font-size:11px; color:#444; }
+  .arb-empty { text-align:center; padding:40px 16px; color:#555; }
+  .arb-empty-icon { font-size:33px; margin-bottom:8px; }
+
+  /* FOOTER */
+  .footer { padding:8px 16px 24px; }
+  .cta-btn {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; padding:16px; border-radius:12px; text-decoration:none;
+    background:linear-gradient(135deg,#f5a623,#d6841a);
+    color:#1a1200; font-weight:800; font-size:16px; letter-spacing:.02em;
+    box-shadow:0 4px 18px rgba(245,166,35,.35);
+    transition:transform .15s, box-shadow .15s;
+    animation:cta-pulse 2.4s ease-in-out infinite;
+  }
+  .cta-btn:active { transform:scale(.97); }
+  .cta-sub { text-align:center; font-size:11px; color:#555; margin-top:8px; letter-spacing:.08em; }
+  @keyframes cta-pulse {
+    0%,100% { box-shadow:0 4px 18px rgba(245,166,35,.35); }
+    50% { box-shadow:0 4px 26px rgba(245,166,35,.65); }
+  }
+
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+  .view { display:none; }
+  .view.active { display:block; }
+
+  .clr-green { color:#4ade80; }
+  .clr-red   { color:#f87171; }
+  .clr-gold  { color:#f5a623; }
+  .clr-muted { color:#aaa; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== LIST VIEW ===== -->
+  <div id="view-list" class="view active">
+    <div class="list-header">
+      <div class="header-top">
+        <div class="header-badge">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="Pinnacle">
+            <defs>
+              <linearGradient id="pinGradHdr" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0a3d6e"/>
+                <stop offset="100%" stop-color="#0a1f3d"/>
+              </linearGradient>
+            </defs>
+            <circle cx="50" cy="50" r="48" fill="url(#pinGradHdr)"/>
+            <text x="36" y="64" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="56" fill="#fff">P</text>
+            <rect x="38" y="68" width="26" height="9" fill="#FE5500"/>
+          </svg>
+        </div>
+        <div class="header-titles">
+          <h1>Pinnacle vs Mercado</h1>
+          <div class="sub">15/06/2026 · Jogos selecionados do dia</div>
+        </div>
+        <div class="header-pill" id="headerPill"></div>
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar por time, liga ou país..." oninput="renderGameCards()">
+      </div>
+      <div class="filter-row">
+        <button class="filter-chip active" data-filter="all" onclick="setFilter('all',this)">Todos</button>
+        <button class="filter-chip" data-filter="wc" onclick="setFilter('wc',this)">🏆 Copa do Mundo</button>
+      </div>
+    </div>
+    <div class="game-cards" id="gameCards"></div>
+  </div>
+
+  <!-- ===== DETAIL VIEW ===== -->
+  <div id="view-detail" class="view">
+    <div class="sticky-top">
+      <div class="back-bar" onclick="showList()">
+        <span class="arrow">←</span>
+        <span class="label">VOLTAR PARA TODOS OS JOGOS</span>
+      </div>
+
+      <div class="matchup-banner" id="matchupBanner"></div>
+    </div>
+
+    <div class="header">
+      <div class="header-meta" id="dMeta"></div>
+
+      <div class="hero">
+        <div class="hero-pct" id="heroPct">—%</div>
+        <div class="hero-text">das odds da Pinnacle<br>são maiores que<br>o mercado</div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-bg"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      </div>
+      <div class="progress-label" id="progressLabel"></div>
+
+      <div class="stat-boxes">
+        <div class="stat-box">
+          <div class="stat-label">VANTAGEM MÉDIA DE COTA</div>
+          <div class="stat-val clr-gold" id="avgAdv">—</div>
+          <div class="stat-sub">em relação a todas as casas</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">VANTAGEM MÉDIA NO MERCADO SELECIONADO</div>
+          <div class="stat-val" id="isLeaderVal">—</div>
+          <div class="stat-sub" id="isLeaderSub"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <div class="section-title">⭐ ODD PINNACLE VS. MÉDIA DAS DEMAIS CASAS — TODOS OS MERCADOS</div>
+        <div class="market-cards" id="marketCards"></div>
+      </div>
+
+      <div class="bar-section">
+        <div class="section-title" id="barTitle">COMPARATIVO VISUAL</div>
+        <div id="barChart"></div>
+      </div>
+    </div>
+
+    <div class="tabs-wrap">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('1x2',this)">1 × 2</button>
+        <button class="tab-btn" onclick="switchTab('ou',this)">GOLS (AC/AB 2.5)</button>
+        <button class="tab-btn" onclick="switchTab('geral',this)">GERAL</button>
+        <button class="tab-btn" id="arbTabBtn" onclick="switchTab('arb',this)">⚡ ARB</button>
+      </div>
+      <div class="warning" id="warningMsg">
+        <span>⚠️</span>
+        <span>Odds podem mudar a qualquer momento. Verifique antes de apostar. Arb não garante aceite nas casas.</span>
+      </div>
+      <div class="sort-row" id="sortRow">
+        <span class="sort-label">TODAS AS CASAS DE APOSTAS</span>
+        <select id="sortSel" onchange="renderTables()">
+          <option value="original">Ordem original</option>
+          <option value="best">Maior odd</option>
+          <option value="worst">Menor odd</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="tab-1x2" class="tab-content active">
+      <div class="tbl-1x2">
+        <div class="tbl-header" id="hdr1x2"></div>
+        <div id="body1x2"></div>
+      </div>
+    </div>
+
+    <div id="tab-ou" class="tab-content">
+      <div class="tbl-ou">
+        <div class="tbl-header">
+          <span>CASA DE APOSTAS</span><span style="text-align:center">ACIMA 2.5 GOLS</span>
+          <span style="text-align:center">ABAIXO 2.5 GOLS</span>
+        </div>
+        <div id="bodyOU"></div>
+      </div>
+    </div>
+
+    <div id="tab-geral" class="tab-content">
+      <div class="tbl-geral-wrap">
+        <div class="tbl-geral-header" id="hdrGeral"></div>
+        <div id="bodyGeral"></div>
+      </div>
+    </div>
+
+    <div id="tab-arb" class="tab-content" style="padding:0 16px 24px">
+      <div id="arbContent"></div>
+    </div>
+
+    <div class="footer">
+      <a id="dLink" class="cta-btn" href="#" target="_blank" rel="noopener">⭐ Apostar agora na Pinnacle ↗</a>
+      <div class="cta-sub">COTAS SEM LIMITES · MAIS DE 25 ANOS DE HISTÓRIA</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// DADOS DOS JOGOS — 15/06/2026 (NOVA RODADA)
+// ============================================================
+const GAMES = [
+{
+  home:"Espanha", away:"Cabo Verde", league:"FIFA World Cup", time:"13:00",
+  link:"https://pinnacle.bet.br/sportsbook/standard/soccer/fifa-world-cup/spain-vs-cape-verde/1620849631?affid=ADSTGRAM",
+  books:["Pinnacle","bet365","Betano","Estrelabet","Superbet","1xBet","BetEsporte","Esportivabet","Betnacional","Betboom","F12","BR4Bet","BateuBet","BrasilBet","Brasildasorte","Casadeapostas","Galerabet","Goldebet","Jogo de Ouro","KTO","Lotogreen","SeguroBet"],
+  o1x2:[[1.083,34.000,13.500],[1.06,23.00,15.00],[1.09,55.00,11.50],[1.09,31.00,9.00],[1.09,22.00,12.00],[1.07,32.00,11.50],[1.09,30.00,13.00],[1.07,31.00,9.00],[1.07,25.66,11.90],[1.08,30.00,13.50],[1.08,28.00,9.80],[1.07,26.00,8.50],[1.07,26.00,8.50],[1.08,25.00,11.50],[1.08,28.00,9.80],[1.08,28.00,13.00],[1.08,25.00,11.50],[1.07,26.00,8.50],[1.08,21.00,10.00],[1.07,31.00,13.00],[1.07,26.00,8.50],[1.08,31.00,12.00]],
+  oou:[[1.325,3.3],[1.33,3.40],[1.37,3.10],[1.35,3.10],[1.36,3.15],[1.33,3.13],[1.36,3.20],[1.33,3.10],[1.34,3.09],[1.34,3.15],[1.33,3.10],[1.33,3.10],[1.33,3.10],[1.35,3.10],[1.37,2.90],[1.36,3.20],[1.35,3.10],[1.33,3.10],[1.36,3.14],[1.30,3.45],[1.33,3.10],[1.35,3.09]]
+},
+{
+  home:"Bélgica", away:"Egito", league:"FIFA World Cup", time:"16:00",
+  link:"https://pinnacle.bet.br/sportsbook/standard/soccer/fifa-world-cup/belgium-vs-egypt/1620849623?affid=ADSTGRAM",
+  books:["Pinnacle","bet365","Betano","Estrelabet","Superbet","1xBet","BetEsporte","Esportivabet","Betnacional","Betboom","Bet7k","F12","BR4Bet","BateuBet","BetdaSorte","BrasilBet","Brasildasorte","Casadeapostas","Galerabet","Goldebet","Jogo de Ouro","KTO","Lotogreen","SeguroBet"],
+  o1x2:[[1.602,6.290,4.130],[1.57,6.00,4.10],[1.67,5.70,4.00],[1.61,5.75,3.75],[1.62,5.60,4.00],[1.56,6.05,4.04],[1.61,6.20,4.00],[1.60,5.50,3.80],[1.57,5.78,3.99],[1.61,6.20,4.10],[1.62,5.30,4.05],[1.61,5.65,3.82],[1.57,5.33,3.75],[1.57,5.33,3.75],[1.60,5.80,3.93],[1.58,5.75,4.00],[1.61,5.65,3.82],[1.59,6.00,4.10],[1.58,5.75,4.00],[1.57,5.33,3.75],[1.58,5.50,3.75],[1.60,6.10,4.00],[1.57,5.33,3.75],[1.59,5.90,3.98]],
+  oou:[[2.02,1.892],[1.91,1.91],[1.95,1.85],[1.94,1.83],[1.97,1.85],[1.94,1.86],[1.96,1.85],[1.92,1.81],[1.92,1.82],[1.98,1.90],[1.95,1.86],[1.92,1.81],[1.92,1.81],[1.92,1.81],[1.89,1.79],[1.93,1.85],[2.00,1.76],[1.96,1.85],[1.93,1.85],[1.92,1.81],[1.96,1.85],[1.93,1.87],[1.92,1.81],[1.92,1.77]]
+},
+{
+  home:"Arábia Saudita", away:"Uruguai", league:"FIFA World Cup", time:"19:00",
+  link:"https://pinnacle.bet.br/sportsbook/standard/soccer/fifa-world-cup/saudi-arabia-vs-uruguay/1620858181?affid=ADSTGRAM",
+  books:["Pinnacle","bet365","Betano","Estrelabet","Superbet","1xBet","BetEsporte","Esportivabet","Betnacional","Betboom","Bet7k","F12","BR4Bet","BateuBet","BetdaSorte","BrasilBet","Brasildasorte","Casadeapostas","Galerabet","Goldebet","Jogo de Ouro","KTO","Lotogreen","SeguroBet"],
+  o1x2:[[8.250,1.476,4.450],[8.00,1.44,4.20],[7.50,1.52,4.35],[7.50,1.50,3.80],[7.30,1.47,4.35],[8.00,1.43,4.32],[7.80,1.49,4.30],[7.00,1.48,4.00],[7.27,1.45,4.27],[8.40,1.47,4.40],[7.90,1.45,4.16],[7.30,1.49,3.97],[7.00,1.46,3.80],[7.00,1.46,3.80],[7.90,1.45,4.16],[7.80,1.47,4.00],[7.30,1.49,3.97],[7.60,1.47,4.40],[7.80,1.47,4.00],[7.00,1.46,3.80],[7.50,1.46,3.80],[8.50,1.46,4.30],[7.00,1.46,3.80],[7.80,1.45,4.30]],
+  oou:[[2.11,1.787],[2.10,1.73],[2.05,1.78],[2.05,1.75],[2.07,1.76],[2.07,1.75],[2.06,1.76],[2.05,1.71],[2.03,1.73],[2.11,1.80],[2.07,1.76],[2.00,1.75],[2.00,1.75],[2.05,1.71],[2.00,1.70],[2.00,1.80],[2.05,1.71],[2.07,1.76],[2.00,1.80],[2.00,1.75],[2.08,1.75],[2.06,1.76],[2.00,1.75],[2.00,1.70]]
+},
+{
+  home:"Criciúma", away:"Ceará", league:"Brazil Série B", time:"21:00",
+  link:"https://pinnacle.bet.br/sportsbook/standard/soccer/brazil-serie-b/criciuma-vs-ceara/1631789712?affid=ADSTGRAM",
+  books:["Pinnacle","bet365","Betano","Estrelabet","Superbet","1xBet","BetEsporte","Esportivabet","Betnacional","Betboom","Bet7k","F12","BR4Bet","BateuBet","BetdaSorte","BrasilBet","Brasildasorte","Casadeapostas","Galerabet","Goldebet","Jogo de Ouro","KTO","Lotogreen","SeguroBet"],
+  o1x2:[[1.943,4.540,3.220],[1.91,4.33,3.10],[2.00,4.60,3.25],[1.93,4.33,3.10],[1.95,4.50,3.10],[1.94,4.21,3.13],[2.04,4.30,3.10],[1.88,4.20,3.00],[2.00,4.13,3.16],[1.89,4.37,3.12],[1.96,4.17,3.13],[1.94,4.45,3.13],[1.88,4.20,3.00],[1.88,4.20,3.00],[1.91,4.38,3.10],[1.95,4.40,3.15],[1.94,4.45,3.13],[2.00,4.10,3.15],[1.95,4.40,3.15],[1.88,4.20,3.00],[1.94,4.33,3.14],[1.92,4.10,3.30],[1.88,4.20,3.00],[1.92,4.50,3.13]],
+  oou:[[2.4,1.598],[2.35,1.57],[2.32,1.57],[2.33,1.58],[2.32,1.56],[2.33,1.57],[2.37,1.57],[2.33,1.53],[2.34,1.56],[2.31,1.55],[2.34,1.56],[2.33,1.53],[2.33,1.53],[2.33,1.53],[2.29,1.54],[2.35,1.57],[2.33,1.53],[2.34,1.56],[2.35,1.57],[2.33,1.53],[2.36,1.57],[2.30,1.60],[2.33,1.53],[2.30,1.56]]
+},
+{
+  home:"Londrina", away:"Avaí", league:"Brazil Série B", time:"21:00",
+  link:"https://pinnacle.bet.br/sportsbook/standard/soccer/brazil-serie-b/londrina-vs-avai/1631790696?affid=ADSTGRAM",
+  books:["Pinnacle","bet365","Betano","Estrelabet","Superbet","1xBet","BetEsporte","Esportivabet","Betnacional","Betboom","Bet7k","F12","BR4Bet","BateuBet","BetdaSorte","BrasilBet","Brasildasorte","Casadeapostas","Galerabet","Goldebet","Jogo de Ouro","KTO","Lotogreen","SeguroBet"],
+  o1x2:[[2.460,3.220,3.060],[2.30,3.25,3.10],[2.45,3.20,2.95],[2.40,3.14,3.00],[2.42,3.20,3.00],[2.38,3.10,3.02],[2.42,3.25,3.00],[2.36,3.00,2.90],[2.37,3.19,3.08],[2.38,3.12,2.97],[2.41,3.13,3.00],[2.43,3.16,3.01],[2.36,3.00,2.90],[2.36,3.00,2.90],[2.39,3.11,2.98],[2.42,3.15,3.10],[2.43,3.16,3.01],[2.37,3.20,3.10],[2.42,3.15,3.10],[2.36,3.00,2.90],[2.42,3.14,3.00],[2.32,3.10,3.15],[2.36,3.00,2.90],[2.41,3.14,3.02]],
+  oou:[[2.38,1.606],[2.30,1.60],[2.30,1.57],[2.30,1.60],[2.30,1.57],[2.29,1.59],[2.29,1.60],[2.28,1.55],[2.27,1.59],[2.29,1.56],[2.29,1.58],[2.28,1.55],[2.28,1.55],[2.28,1.55],[2.25,1.56],[2.30,1.60],[2.28,1.55],[2.27,1.59],[2.30,1.60],[2.28,1.55],[2.30,1.60],[2.16,1.67],[2.28,1.55],[2.28,1.57]]
+},
+{
+  home:"Irã", away:"Nova Zelândia", league:"FIFA World Cup", time:"22:00",
+  link:"https://pinnacle.bet.br/sportsbook/standard/soccer/fifa-world-cup/iran-vs-new-zealand/1620849629?affid=ADSTGRAM",
+  books:["Pinnacle","bet365","Betano","Estrelabet","Superbet","1xBet","BetEsporte","Esportivabet","Betnacional","Betboom","Bet7k","F12","BR4Bet","BateuBet","BetdaSorte","BrasilBet","Brasildasorte","Casadeapostas","Galerabet","Goldebet","Jogo de Ouro","KTO","Lotogreen","SeguroBet"],
+  o1x2:[[1.952,4.630,3.390],[1.91,4.33,3.30],[2.00,4.45,3.35],[1.93,4.25,3.25],[1.95,4.35,3.35],[1.89,4.48,3.32],[1.97,4.50,3.30],[1.90,4.20,3.25],[1.91,4.30,3.29],[1.95,4.60,3.40],[1.93,4.35,3.28],[1.92,4.25,3.29],[1.87,4.20,3.14],[1.87,4.20,3.14],[1.93,4.35,3.28],[1.88,4.45,3.35],[1.92,4.25,3.29],[1.94,4.40,3.35],[1.88,4.45,3.35],[1.87,4.20,3.14],[1.88,4.00,3.33],[1.91,4.60,3.35],[1.87,4.20,3.14],[1.91,4.50,3.30]],
+  oou:[[2.54,1.561],[2.50,1.53],[2.42,1.57],[2.45,1.52],[2.45,1.56],[2.46,1.55],[2.44,1.56],[2.42,1.50],[2.38,1.54],[2.53,1.57],[2.45,1.55],[2.42,1.50],[2.42,1.50],[2.42,1.50],[2.36,1.51],[2.45,1.53],[2.50,1.47],[2.44,1.56],[2.45,1.53],[2.42,1.50],[2.45,1.52],[2.45,1.55],[2.42,1.50],[2.33,1.52]]
+}
+];
+
+// ============================================================
+// MASCOTES / CORES DOS TIMES
+// ============================================================
+const TEAM_COLORS = {
+  "Espanha":{p:'#AA151B',s:'#F1BF00'},
+  "Cabo Verde":{p:'#003893',s:'#CF2027'},
+  "Bélgica":{p:'#1A1A1A',s:'#FDDA24'},
+  "Egito":{p:'#CE1126',s:'#000000'},
+  "Arábia Saudita":{p:'#006C35',s:'#FFFFFF'},
+  "Uruguai":{p:'#5CACE2',s:'#FFFFFF'},
+  "Criciúma":{p:'#FFD200',s:'#1A1A1A'},
+  "Ceará":{p:'#1A1A1A',s:'#FFFFFF'},
+  "Londrina":{p:'#D71920',s:'#1A1A1A'},
+  "Avaí":{p:'#1A1A1A',s:'#FFFFFF'},
+  "Irã":{p:'#1A8E3C',s:'#FFFFFF'},
+  "Nova Zelândia":{p:'#1A1A1A',s:'#FFFFFF'}
+};
+
+const TEAM_ABBR = {
+  "Espanha":"ESP","Cabo Verde":"CPV",
+  "Bélgica":"BEL","Egito":"EGY",
+  "Arábia Saudita":"KSA","Uruguai":"URU",
+  "Criciúma":"CRI","Ceará":"CEA",
+  "Londrina":"LON","Avaí":"AVA",
+  "Irã":"IRN","Nova Zelândia":"NZL"
+};
+
+const TEAM_FLAG = {
+  "Espanha":"🇪🇸","Cabo Verde":"🇨🇻",
+  "Bélgica":"🇧🇪","Egito":"🇪🇬",
+  "Arábia Saudita":"🇸🇦","Uruguai":"🇺🇾",
+  "Irã":"🇮🇷","Nova Zelândia":"🇳🇿"
+};
+
+function isLightColor(hex) {
+  const c = hex.replace('#','');
+  const r = parseInt(c.substring(0,2),16);
+  const g = parseInt(c.substring(2,4),16);
+  const b = parseInt(c.substring(4,6),16);
+  const lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+  return lum > 0.6;
+}
+
+function countryFlagSVG(country) {
+  const W=100, H=120;
+  const wrap = (inner) => `<svg viewBox="0 0 ${W} ${H}" width="84" height="101" xmlns="http://www.w3.org/2000/svg">
+    <clipPath id="flagclip-${country.replace(/\\s/g,'')}"><rect x="4" y="14" width="92" height="92" rx="8"/></clipPath>
+    <g clip-path="url(#flagclip-${country.replace(/\\s/g,'')})">${inner}</g>
+    <rect x="4" y="14" width="92" height="92" rx="8" fill="none" stroke="#fff" stroke-width="3"/>
+  </svg>`;
+
+  switch(country) {
+    case "Espanha":
+      return wrap(`
+        <rect x="0" y="14" width="100" height="92" fill="#AA151B"/>
+        <rect x="0" y="37" width="100" height="46" fill="#F1BF00"/>
+        <rect x="22" y="48" width="20" height="24" fill="#AA151B"/>`);
+    case "Cabo Verde":
+      return wrap(`
+        <rect x="0" y="14" width="100" height="30.6" fill="#003893"/>
+        <rect x="0" y="44.6" width="100" height="15" fill="#fff"/>
+        <rect x="0" y="59.6" width="100" height="8" fill="#CF2027"/>
+        <rect x="0" y="67.6" width="100" height="8" fill="#fff"/>
+        <rect x="0" y="75.6" width="100" height="30.4" fill="#003893"/>
+        <g fill="#F1C500">
+          <circle cx="30" cy="60" r="3"/><circle cx="40" cy="50" r="3"/><circle cx="55" cy="46" r="3"/>
+          <circle cx="68" cy="50" r="3"/><circle cx="78" cy="60" r="3"/><circle cx="75" cy="73" r="3"/>
+          <circle cx="60" cy="80" r="3"/><circle cx="45" cy="78" r="3"/><circle cx="33" cy="70" r="3"/>
+          <circle cx="50" cy="63" r="3"/>
+        </g>`);
+    case "Bélgica":
+      return wrap(`
+        <rect x="0" y="14" width="33.3" height="92" fill="#1A1A1A"/>
+        <rect x="33.3" y="14" width="33.3" height="92" fill="#FDDA24"/>
+        <rect x="66.6" y="14" width="33.4" height="92" fill="#EF3340"/>`);
+    case "Egito":
+      return wrap(`
+        <rect x="0" y="14" width="100" height="30.6" fill="#CE1126"/>
+        <rect x="0" y="44.6" width="100" height="30.8" fill="#fff"/>
+        <rect x="0" y="75.4" width="100" height="30.6" fill="#1A1A1A"/>
+        <circle cx="50" cy="60" r="8" fill="none" stroke="#C09300" stroke-width="2"/>`);
+    case "Arábia Saudita":
+      return wrap(`
+        <rect x="0" y="14" width="100" height="92" fill="#006C35"/>
+        <rect x="20" y="50" width="60" height="6" fill="#fff"/>
+        <rect x="35" y="64" width="30" height="6" fill="#fff"/>`);
+    case "Uruguai":
+      return wrap(`
+        <rect x="0" y="14" width="100" height="92" fill="#fff"/>
+        <rect x="0" y="14" width="100" height="13" fill="#5CACE2"/>
+        <rect x="0" y="40" width="100" height="13" fill="#5CACE2"/>
+        <rect x="0" y="66" width="100" height="13" fill="#5CACE2"/>
+        <rect x="0" y="92" width="100" height="14" fill="#5CACE2"/>
+        <circle cx="22" cy="32" r="13" fill="#FCD116"/>`);
+    case "Irã":
+      return wrap(`
+        <rect x="0" y="14" width="100" height="30.6" fill="#239F40"/>
+        <rect x="0" y="44.6" width="100" height="30.8" fill="#fff"/>
+        <rect x="0" y="75.4" width="100" height="30.6" fill="#DA0000"/>
+        <circle cx="50" cy="60" r="9" fill="#DA0000"/>`);
+    case "Nova Zelândia":
+      return wrap(`
+        <rect x="0" y="14" width="100" height="92" fill="#00247D"/>
+        <g fill="#CC142B" stroke="#fff" stroke-width="1.5">
+          <circle cx="68" cy="32" r="5"/>
+          <circle cx="84" cy="48" r="5"/>
+          <circle cx="80" cy="72" r="5"/>
+          <circle cx="62" cy="85" r="5"/>
+        </g>`);
+    default:
+      return wrap(`<rect x="0" y="14" width="100" height="92" fill="#444"/>`);
+  }
+}
+
+function shieldSVG(primary, secondary, label) {
+  const textColor = isLightColor(secondary) ? '#1a1a1a' : '#fff';
+  const strokeColor = isLightColor(secondary) ? '#fff' : '#000';
+  return `<svg viewBox="0 0 100 120" width="84" height="101" xmlns="http://www.w3.org/2000/svg">
+    <path d="M50 4 L92 16 L92 58 Q92 96 50 116 Q8 96 8 58 L8 16 Z" fill="${primary}" stroke="#fff" stroke-width="3"/>
+    <path d="M8 50 L92 50 L92 58 Q92 96 50 116 Q8 96 8 58 Z" fill="${secondary}"/>
+    <path d="M50 10 L55 21 L67 22 L57 29 L60 41 L50 34 L40 41 L43 29 L33 22 L45 21 Z" fill="#fff" opacity="0.9"/>
+    <text x="50" y="80" font-family="Arial,sans-serif" font-weight="900" font-size="22" fill="${textColor}" text-anchor="middle" stroke="${strokeColor}" stroke-width="0.8" paint-order="stroke">${label}</text>
+  </svg>`;
+}
+
+function teamCrestSVG(teamName) {
+  if (TEAM_FLAG[teamName]) {
+    return countryFlagSVG(teamName);
+  }
+  if (TEAM_COLORS[teamName]) {
+    const c = TEAM_COLORS[teamName];
+    return shieldSVG(c.p, c.s, TEAM_ABBR[teamName] || teamName.slice(0,3).toUpperCase());
+  }
+  return clubFlagSVG('#444','#888',84,57);
+}
+
+function renderBanner() {
+  const g = currentGame;
+  const hc = TEAM_COLORS[g.home] || {p:'#333',s:'#888'};
+  const ac = TEAM_COLORS[g.away] || {p:'#333',s:'#888'};
+  document.getElementById('matchupBanner').innerHTML = `
+    <div class="mb-bg" style="background:linear-gradient(100deg, ${hc.p} 0%, ${hc.p} 48%, ${ac.p} 52%, ${ac.p} 100%)">
+      <div class="mb-side">
+        ${teamCrestSVG(g.home)}
+        <div class="mb-name">${g.home}</div>
+      </div>
+      <div class="mb-vs">VS</div>
+      <div class="mb-side">
+        ${teamCrestSVG(g.away)}
+        <div class="mb-name">${g.away}</div>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// CONSTANTES / HELPERS
+// ============================================================
+const MARKET_KEYS = ['h','a','d','o','u'];
+let activeMarket = 'h';
+let currentTab = '1x2';
+let currentGame = null;
+
+function getVal(g, i, key) {
+  return (key==='h'||key==='a'||key==='d') ? g.o1x2[i][{h:0,a:1,d:2}[key]] : g.oou[i][{o:0,u:1}[key]];
+}
+function pin(g, key) { return getVal(g,0,key); }
+function avgOthers(g, key) {
+  const others = g.books.map((_,i) => getVal(g,i,key)).slice(1);
+  return others.reduce((s,v)=>s+v,0) / others.length;
+}
+function pct(val, ref) { return (val / ref - 1) * 100; }
+function fmtPct(v) { return (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; }
+function fmtO(v) { return v.toFixed(3); }
+function clrClass(d) { return d < 0 ? 'clr-green' : d > 0 ? 'clr-red' : 'clr-muted'; }
+function marketLabel(g, key) {
+  return {h:g.home, a:g.away, d:'Empate', o:'Acima 2.5 Gols', u:'Abaixo 2.5 Gols'}[key];
+}
+function marketShort(g, key) {
+  const sh = s => s.length>6 ? s.slice(0,5)+'…' : s;
+  return {h:sh(g.home), a:sh(g.away), d:'X', o:'AC 2.5⚽', u:'AB 2.5⚽'}[key];
+}
+
+// ============================================================
+// STATS
+// ============================================================
+function computeStats(g) {
+  let total = 0, pinWins = 0, sum = 0, cnt = 0;
+  MARKET_KEYS.forEach(key => {
+    const ref = getVal(g,0,key);
+    g.books.slice(1).forEach((_, j) => {
+      const val = getVal(g, j+1, key);
+      total++; cnt++;
+      if (ref >= val) pinWins++;
+      sum += (ref / val - 1) * 100;
+    });
+  });
+  return { pctWin: Math.round(pinWins/total*100), pinWins, total, avgAdv: sum/cnt };
+}
+
+function findArbs(g) {
+  const arbs = [], seen = new Set();
+  const poolH = g.books.map((bk,i) => ({bk, odds: getVal(g,i,'h')}));
+  const poolD = g.books.map((bk,i) => ({bk, odds: getVal(g,i,'d')}));
+  const poolA = g.books.map((bk,i) => ({bk, odds: getVal(g,i,'a')}));
+
+  poolH.forEach(h => poolD.forEach(d => poolA.forEach(a => {
+    if (h.bk!=='Pinnacle' && d.bk!=='Pinnacle' && a.bk!=='Pinnacle') return;
+    const margin = 1/h.odds + 1/d.odds + 1/a.odds;
+    if (margin >= 1) return;
+    const key = `${h.bk}|${d.bk}|${a.bk}`;
+    if (seen.has(key)) return; seen.add(key);
+    arbs.push({ market:'1×2', legs:[
+      {bk:h.bk,label:g.home,odds:h.odds},
+      {bk:d.bk,label:'Empate',odds:d.odds},
+      {bk:a.bk,label:g.away,odds:a.odds}
+    ], margin, profit:(1-margin)*100 });
+  })));
+
+  const pinO = getVal(g,0,'o'), pinU = getVal(g,0,'u');
+  g.books.forEach((bk,i) => {
+    if (i===0) return;
+    const ov = getVal(g,i,'o'), un = getVal(g,i,'u');
+    [
+      [{bk:'Pinnacle',label:'Acima 2.5 Gols',odds:pinO},{bk,label:'Abaixo 2.5 Gols',odds:un}],
+      [{bk,label:'Acima 2.5 Gols',odds:ov},{bk:'Pinnacle',label:'Abaixo 2.5 Gols',odds:pinU}]
+    ].forEach(legs => {
+      const margin = legs.reduce((s,l)=>s+1/l.odds,0);
+      if (margin < 1) arbs.push({market:'Gols A/Ab 2.5',legs,margin,profit:(1-margin)*100});
+    });
+  });
+
+  return arbs.sort((a,b) => b.profit - a.profit);
+}
+
+function renderHeaderPill() {
+  const wrap = document.getElementById('headerPill');
+  wrap.textContent = `${GAMES.length} JOGOS`;
+}
+
+function clubFlagSVG(primary, secondary, w, h) {
+  w = w || 26; h = h || 18;
+  return `<svg viewBox="0 0 32 22" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="2.5" height="22" fill="#888"/>
+    <rect x="2.5" y="1" width="29.5" height="20" fill="${primary}"/>
+    <path d="M2.5 11 L32 1 L32 21 Z" fill="${secondary}"/>
+    <rect x="2.5" y="1" width="29.5" height="20" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+  </svg>`;
+}
+
+function teamFlagHTML(teamName) {
+  if (TEAM_FLAG[teamName]) {
+    return `<span class="gc-flag" title="${teamName}">${TEAM_FLAG[teamName]}</span>`;
+  }
+  const c = TEAM_COLORS[teamName] || {p:'#444',s:'#888'};
+  return `<span class="gc-flag" title="${teamName}">${clubFlagSVG(c.p, c.s)}</span>`;
+}
+
+// ============================================================
+// LIST VIEW
+// ============================================================
+let activeFilter = 'all';
+
+function setFilter(filter, btn) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderGameCards();
+}
+
+function renderGameCards() {
+  const wrap = document.getElementById('gameCards');
+  const query = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+  const filtered = GAMES
+    .map((g, idx) => ({ g, idx }))
+    .filter(({g}) => {
+      if (activeFilter === 'wc' && !g.league.toLowerCase().includes('world cup')) return false;
+      if (!query) return true;
+      const haystack = `${g.home} ${g.away} ${g.league}`.toLowerCase();
+      return haystack.includes(query);
+    });
+
+  if (filtered.length === 0) {
+    const msg = query
+      ? `🔍 Nenhum jogo encontrado para "${query}"`
+      : '🏆 Nenhum jogo da Copa do Mundo no momento';
+    wrap.innerHTML = `<div class="no-results">${msg}</div>`;
+    return;
+  }
+
+  wrap.innerHTML = filtered.map(({g, idx}) => {
+    const stats = computeStats(g);
+    const pinH = pin(g,'h'), pinA = pin(g,'a'), pinD = pin(g,'d');
+    const isWC = g.league.toLowerCase().includes('world cup');
+    return `<div class="game-card${isWC?' worldcup':''}" onclick="showDetail(${idx})">
+      <div class="gc-head">
+        <span class="gc-league">${isWC?'🏆 ':''}${g.league.toUpperCase()}</span>
+        <span class="gc-time">15/06 · ${g.time}</span>
+      </div>
+      <div class="gc-matchup">
+        <div class="gc-team">
+          ${teamFlagHTML(g.home)}
+          <div class="gc-team-name">${g.home}</div>
+        </div>
+        <div class="gc-vs">VS</div>
+        <div class="gc-team">
+          ${teamFlagHTML(g.away)}
+          <div class="gc-team-name">${g.away}</div>
+        </div>
+      </div>
+      <div class="gc-badges-legend">⭐ Odd Pinnacle · 📊 Média das outras casas</div>
+      <div class="gc-badges">
+        <div class="gc-badge"><span class="lbl">${marketShort(g,'h')}</span><span class="val">${fmtO(pinH)}</span><span class="avg">Outras ${fmtO(avgOthers(g,'h'))}</span></div>
+        <div class="gc-badge"><span class="lbl">X (Empate)</span><span class="val">${fmtO(pinD)}</span><span class="avg">Outras ${fmtO(avgOthers(g,'d'))}</span></div>
+        <div class="gc-badge"><span class="lbl">${marketShort(g,'a')}</span><span class="val">${fmtO(pinA)}</span><span class="avg">Outras ${fmtO(avgOthers(g,'a'))}</span></div>
+      </div>
+      <div class="gc-bottom">
+        <span class="gc-edge"><b>${stats.pctWin}%</b> a Pinnacle lidera as Odds x Outras Marcas<br>vantagem de margem média das Odds <b>+${stats.avgAdv.toFixed(2)}%</b></span>
+        <span class="gc-arrow">→</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showList() {
+  document.getElementById('view-list').classList.add('active');
+  document.getElementById('view-detail').classList.remove('active');
+  window.scrollTo(0, 0);
+}
+
+// ============================================================
+// DETAIL VIEW
+// ============================================================
+function showDetail(idx) {
+  currentGame = GAMES[idx];
+  activeMarket = 'h';
+  currentTab = '1x2';
+
+  document.getElementById('view-list').classList.remove('active');
+  document.getElementById('view-detail').classList.add('active');
+  window.scrollTo(0, 0);
+
+  // reset tabs UI
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  document.querySelectorAll('.tab-content').forEach((t,i) => t.classList.toggle('active', i===0));
+  document.getElementById('warningMsg').style.display = 'flex';
+  document.getElementById('sortRow').style.display = 'flex';
+  document.getElementById('sortSel').value = 'original';
+
+  renderDetail();
+}
+
+function renderDetail() {
+  const g = currentGame;
+  const stats = computeStats(g);
+  const arbs = findArbs(g);
+
+  renderBanner();
+
+  document.getElementById('dMeta').textContent =
+    `${g.league.toUpperCase()} · ${g.home.toUpperCase()} × ${g.away.toUpperCase()} · 15 JUN ${g.time}`;
+  document.getElementById('heroPct').textContent = stats.pctWin + '%';
+  document.getElementById('progressFill').style.width = stats.pctWin + '%';
+  document.getElementById('progressLabel').textContent =
+    `${stats.pinWins}/${stats.total} · ${g.books.length-1} casas · 5 mercados`;
+  document.getElementById('avgAdv').textContent = '+' + stats.avgAdv.toFixed(2) + '%';
+  document.getElementById('arbTabBtn').textContent = `⚡ ARB (${arbs.length})`;
+  document.getElementById('dLink').href = g.link;
+
+  // table headers
+  document.getElementById('hdr1x2').innerHTML =
+    `<span>CASA DE APOSTAS</span><span style="text-align:center">${g.home.toUpperCase()}</span>
+     <span style="text-align:center">${g.away.toUpperCase()}</span><span style="text-align:center">EMPATE</span>`;
+  document.getElementById('hdrGeral').innerHTML =
+    `<span>CASA</span><span>${marketShort(g,'h').toUpperCase()}</span><span>${marketShort(g,'a').toUpperCase()}</span><span>X</span><span>AC 2.5 GOLS</span><span>AB 2.5 GOLS</span>`;
+
+  renderMarketCards();
+  renderLeaderBox();
+  renderBarChart();
+  renderTables();
+  renderArb(arbs);
+}
+
+function renderMarketCards() {
+  const g = currentGame;
+  const wrap = document.getElementById('marketCards');
+  wrap.innerHTML = '';
+  MARKET_KEYS.forEach(key => {
+    const allVals = g.books.map((_,i) => getVal(g,i,key));
+    const others = allVals.slice(1);
+    const avgOthers = others.reduce((s,v)=>s+v,0) / others.length;
+    const pinV = pin(g,key);
+    const card = document.createElement('div');
+    card.className = 'mcard' + (key===activeMarket?' active':'');
+    card.innerHTML = `
+      <div class="mcard-label">${marketShort(g,key)}</div>
+      <div class="mcard-val">⭐ ${fmtO(pinV)}</div>
+      <div class="mcard-status">Outras ${fmtO(avgOthers)}</div>`;
+    card.onclick = () => { activeMarket = key; renderMarketCards(); renderBarChart(); renderLeaderBox(); };
+    wrap.appendChild(card);
+  });
+}
+
+function renderLeaderBox() {
+  const g = currentGame;
+  const pinV = pin(g,activeMarket);
+  const others = g.books.slice(1).map((_,i) => getVal(g,i+1,activeMarket));
+  const avgOthers = others.reduce((s,v)=>s+v,0) / others.length;
+  const adv = (pinV / avgOthers - 1) * 100;
+  document.getElementById('isLeaderVal').className = 'stat-val ' + (adv >= 0 ? 'clr-green' : 'clr-red');
+  document.getElementById('isLeaderVal').textContent = fmtPct(adv);
+  document.getElementById('isLeaderSub').textContent = `Pinnacle ${fmtO(pinV)} vs média ${fmtO(avgOthers)}`;
+}
+
+function renderBarChart() {
+  const g = currentGame;
+  document.getElementById('barTitle').textContent = 'COMPARATIVO VISUAL · ' + marketLabel(g,activeMarket).toUpperCase();
+  const allVals = g.books.map((_,i) => getVal(g,i,activeMarket));
+  const maxV = Math.max(...allVals);
+  const refV = pin(g,activeMarket);
+  const wrap = document.getElementById('barChart');
+  wrap.innerHTML = '';
+  g.books.forEach((bk, i) => {
+    const val = getVal(g,i,activeMarket);
+    const diff = pct(val, refV);
+    const isPinn = i === 0;
+    const barW = (val / maxV * 100).toFixed(1);
+    const barColor = isPinn ? '#f5a623' : diff < 0 ? '#166534' : diff > 0 ? '#7f1d1d' : '#444';
+    const textColor = isPinn ? '#f5a623' : diff < 0 ? '#4ade80' : diff > 0 ? '#f87171' : '#aaa';
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-name${isPinn?' pin':''}" title="${bk}">${isPinn?'⭐ ':''}${bk}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${barW}%;background:${barColor}"></div></div>
+      <div class="bar-odd" style="color:${textColor}">${fmtO(val)}</div>
+      <div class="bar-diff" style="color:${isPinn?'#666':textColor}">${isPinn?'REF':fmtPct(diff)}</div>`;
+    wrap.appendChild(row);
+  });
+}
+
+// ── TABLES ──
+function getSortedRows(g, sortKey) {
+  const idxs = g.books.map((_,i) => i);
+  const s = document.getElementById('sortSel').value;
+  if (s==='best')  idxs.sort((a,b) => getVal(g,b,sortKey) - getVal(g,a,sortKey));
+  if (s==='worst') idxs.sort((a,b) => getVal(g,a,sortKey) - getVal(g,b,sortKey));
+  return idxs;
+}
+
+function makeCell(val, ref, isPinn) {
+  const d = pct(val, ref);
+  const cls = isPinn ? 'clr-gold' : clrClass(d);
+  return `<div class="cell">
+    <div class="cell-odd ${cls}">${fmtO(val)}</div>
+    ${!isPinn ? `<div class="cell-pct ${cls}">${fmtPct(d)}</div>` : ''}
+  </div>`;
+}
+
+function renderTables() {
+  const g = currentGame;
+  const pinH = pin(g,'h'), pinA = pin(g,'a'), pinD = pin(g,'d'), pinO = pin(g,'o'), pinU = pin(g,'u');
+
+  // 1X2
+  const idxs1 = getSortedRows(g,'h');
+  document.getElementById('body1x2').innerHTML = idxs1.map(i => {
+    const isPinn = i===0;
+    const h = getVal(g,i,'h'), a = getVal(g,i,'a'), d = getVal(g,i,'d');
+    return `<div class="tbl-row${isPinn?' pin-row':''} tbl-1x2">
+      <div class="bk-name${isPinn?' pin':''}">${isPinn?'⭐ ':''}${g.books[i]}</div>
+      ${makeCell(h,pinH,isPinn)}${makeCell(a,pinA,isPinn)}${makeCell(d,pinD,isPinn)}
+    </div>`;
+  }).join('');
+
+  // O/U
+  const idxsU = getSortedRows(g,'o');
+  document.getElementById('bodyOU').innerHTML = idxsU.map(i => {
+    const isPinn = i===0;
+    const o = getVal(g,i,'o'), u = getVal(g,i,'u');
+    return `<div class="tbl-row${isPinn?' pin-row':''} tbl-ou">
+      <div class="bk-name${isPinn?' pin':''}">${isPinn?'⭐ ':''}${g.books[i]}</div>
+      ${makeCell(o,pinO,isPinn)}${makeCell(u,pinU,isPinn)}
+    </div>`;
+  }).join('');
+
+  // GERAL
+  document.getElementById('bodyGeral').innerHTML = g.books.map((bk,i) => {
+    const isPinn=i===0;
+    const cols=[
+      {val:getVal(g,i,'h'),ref:pinH},{val:getVal(g,i,'a'),ref:pinA},{val:getVal(g,i,'d'),ref:pinD},
+      {val:getVal(g,i,'o'),ref:pinO},{val:getVal(g,i,'u'),ref:pinU}
+    ];
+    return `<div class="tbl-geral-row${isPinn?' pin-row':''}">
+      <div class="geral-name${isPinn?' pin':''}" title="${bk}">${isPinn?'⭐ ':''}${bk}</div>
+      ${cols.map(({val,ref})=>{
+        const d=pct(val,ref);
+        const cls=isPinn?'clr-gold':clrClass(d);
+        return `<div class="gcell">
+          <div class="gcell-odd ${cls}">${fmtO(val)}</div>
+          ${!isPinn?`<div class="gcell-pct ${cls}">${fmtPct(d)}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderArb(arbs) {
+  const el = document.getElementById('arbContent');
+  if (arbs.length === 0) {
+    el.innerHTML = `<div class="arb-empty">
+      <div class="arb-empty-icon">🔍</div>
+      <div>Nenhuma arbitragem encontrada.</div>
+      <div style="font-size:12px;color:#444;margin-top:4px">Combos próximos podem mudar conforme as odds se movem.</div>
+    </div>`;
+    return;
+  }
+  const cols = n => n===3 ? '1fr 1fr 1fr' : '1fr 1fr';
+  el.innerHTML = `<div class="arb-info">⚡ <strong>${arbs.length} oportunidade${arbs.length!==1?'s':''}</strong> com Pinnacle como uma das pernas. Margem &lt; 100% = lucro garantido.</div>` +
+  arbs.map(arb => {
+    const stakes = arb.legs.map(l => (1/l.odds)/arb.margin);
+    return `<div class="arb-card">
+      <div class="arb-head">
+        <span class="arb-badge">${arb.market}</span>
+        <span class="arb-profit">+${arb.profit.toFixed(3)}% lucro</span>
+      </div>
+      <div class="arb-legs" style="grid-template-columns:${cols(arb.legs.length)}">
+        ${arb.legs.map((leg,j)=>`<div class="arb-leg">
+          <div class="arb-leg-bk">${leg.bk==='Pinnacle'?'⭐ ':''}${leg.bk}</div>
+          <div class="arb-leg-label">${leg.label}</div>
+          <div class="arb-leg-bottom">
+            <span class="arb-leg-odd">${fmtO(leg.odds)}</span>
+            <span class="arb-leg-stake">${(stakes[j]*100).toFixed(1)}%</span>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div class="arb-example">Ex R$1000 → ${arb.legs.map((leg,j)=>`R$${(stakes[j]*1000).toFixed(2)} em ${leg.label} (${leg.bk})`).join(' + ')}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── TAB SWITCH ──
+function switchTab(id, btn) {
+  currentTab = id;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  const showWarning = id !== 'arb';
+  const showSort = ['1x2','ou','geral'].includes(id);
+  document.getElementById('warningMsg').style.display = showWarning ? 'flex' : 'none';
+  document.getElementById('sortRow').style.display = showSort ? 'flex' : 'none';
+}
+
+// ── INIT ──
+renderHeaderPill();
+renderGameCards();
+</script>
+</body>
+</html>
